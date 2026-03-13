@@ -1,4 +1,4 @@
-SAMPLE_BUDGET_PERCENTAGES = [
+BASE_BUDGET_PERCENTAGES = [
     ("Rent/Mortgage", 0.30),
     ("Home & Car Insurance", 0.05),
     ("Health Insurance", 0.05),
@@ -18,19 +18,24 @@ SAMPLE_BUDGET_PERCENTAGES = [
 ]
 
 
-def build_sample_budget(monthly_income):
+def build_sample_budget(monthly_income, include_tithing=False):
+    budget_percentages = list(BASE_BUDGET_PERCENTAGES)
+
+    if include_tithing:
+        budget_percentages.insert(0, ("Tithing", 0.10))
+
     return [
         {
             "expense": expense,
             "percentage": percentage,
             "amount": round(monthly_income * percentage, 2),
         }
-        for expense, percentage in SAMPLE_BUDGET_PERCENTAGES
+        for expense, percentage in budget_percentages
     ]
 
 
-def print_sample_budget(monthly_income):
-    budget_items = build_sample_budget(monthly_income)
+def print_sample_budget(monthly_income, include_tithing=False):
+    budget_items = build_sample_budget(monthly_income, include_tithing=include_tithing)
 
     print("")
     print("Sample Monthly Budget:")

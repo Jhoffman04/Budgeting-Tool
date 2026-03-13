@@ -14,6 +14,8 @@ def main():
     marital_status = int(input("Type the number corresponding to your marital status: "))
 
     state = input("Enter your state (example: GA or Georgia): ")
+    tithing_input = input("Are you tithing? (yes/no): ").strip().lower()
+    include_tithing = tithing_input in {"yes", "y"}
 
     federal_tax = calculate_federal_tax(income, marital_status)
     state_tax = calculate_state_tax(income, state)
@@ -35,7 +37,7 @@ def main():
     print("")
     monthly_income = round(take_home / 12, 2)
     print("Monthly Budget Amount: $", monthly_income)
-    print_sample_budget(monthly_income)
+    print_sample_budget(monthly_income, include_tithing=include_tithing)
 
 
 if __name__ == "__main__":
