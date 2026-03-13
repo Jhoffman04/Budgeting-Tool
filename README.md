@@ -68,7 +68,7 @@ No third-party Excel package is required for export. The workbook export uses Py
 Open a terminal in the project folder:
 
 ```bash
-cd "/Users/josiahhoffman/Documents/New project/Budgeting-Tool"
+cd "/Users/userName/Documents/New project/Budgeting-Tool"
 ```
 
 ### Run The GUI
