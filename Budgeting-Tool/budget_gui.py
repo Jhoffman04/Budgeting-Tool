@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, font, messagebox, ttk
 
 from budget_engine import MARITAL_STATUSES, calculate_budget_summary, export_budget_summary
+from sample_budget import format_percentage
 
 
 COLORS = {
@@ -596,7 +597,7 @@ class BudgetPlannerApp:
             self.budget_tree.delete(item)
 
         for item in summary["budget_items"]:
-            allocation = "Fixed" if item["percentage"] is None else f"{item['percentage'] * 100:.0f}%"
+            allocation = "Fixed" if item["percentage"] is None else format_percentage(item["percentage"])
             self.budget_tree.insert(
                 "",
                 "end",

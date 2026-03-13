@@ -1,6 +1,10 @@
 from zipfile import ZIP_DEFLATED, ZipFile
 
 
+TITHING_RATE = 0.10
+MAX_CATEGORY_REDUCTION = 0.02
+REDUCTION_STEP = 0.005
+
 BASE_BUDGET_PERCENTAGES = [
     ("Rent/Mortgage", 0.30),
     ("Home & Car Insurance", 0.05),
@@ -25,7 +29,8 @@ def build_sample_budget(monthly_income, include_tithing=False, property_tax_mont
     budget_percentages = list(BASE_BUDGET_PERCENTAGES)
 
     if include_tithing:
-        budget_percentages.insert(0, ("Tithing", 0.10))
+        budget_percentages = rebalance_for_tithing(budget_percentages)
+        budget_percentages.insert(0, ("Tithing", TITHING_RATE))
 
     budget_items = [
         {
@@ -65,7 +70,7 @@ def print_sample_budget(monthly_income, include_tithing=False, property_tax_mont
             print(f"{item['expense']}: ${item['amount']:.2f}")
             continue
 
-        percent_label = f"{item['percentage'] * 100:.0f}%"
+        percent_label = format_percentage(item["percentage"])
         print(f"{item['expense']}: {percent_label} = ${item['amount']:.2f}")
 
 
@@ -88,7 +93,7 @@ def export_sample_budget_to_excel(
     ]
 
     for item in budget_items:
-        percentage = "" if item["percentage"] is None else f"{item['percentage'] * 100:.0f}%"
+        percentage = "" if item["percentage"] is None else format_percentage(item["percentage"])
         rows.append([item["expense"], percentage, item["amount"]])
 
     write_simple_xlsx(output_path, rows)
@@ -177,3 +182,50 @@ def write_simple_xlsx(output_path, rows):
         workbook.writestr("xl/workbook.xml", workbook_xml)
         workbook.writestr("xl/_rels/workbook.xml.rels", workbook_rels_xml)
         workbook.writestr("xl/worksheets/sheet1.xml", sheet_xml)
+
+
+def rebalance_for_tithing(budget_percentages):
+    adjusted_percentages = [percentage for _, percentage in budget_percentages]
+    reductions = [0] * len(budget_percentages)
+    remaining_reduction = TITHING_RATE
+
+    while remaining_reduction > 1e-9:
+        progress_made = False
+        ranked_indexes = sorted(
+            range(len(adjusted_percentages)),
+            key=lambda index: adjusted_percentages[index],
+            reverse=True,
+        )
+
+        for index in ranked_indexes:
+            max_step = min(
+                REDUCTION_STEP,
+                MAX_CATEGORY_REDUCTION - reductions[index],
+                remaining_reduction,
+            )
+            if max_step <= 0:
+                continue
+
+            adjusted_percentages[index] -= max_step
+            reductions[index] += max_step
+            remaining_reduction -= max_step
+            progress_made = True
+
+            if remaining_reduction <= 1e-9:
+                break
+
+        if not progress_made:
+            break
+
+    return [
+        (expense, round(adjusted_percentages[index], 4))
+        for index, (expense, _) in enumerate(budget_percentages)
+    ]
+
+
+def format_percentage(percentage):
+    percent_value = percentage * 100
+    if percent_value.is_integer():
+        return f"{percent_value:.0f}%"
+
+    return f"{percent_value:.1f}%"
