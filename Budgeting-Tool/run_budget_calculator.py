@@ -1,98 +1,93 @@
-from federal import calculate_federal_tax, calculate_fica_tax
-from sample_budget import export_sample_budget_to_excel, print_sample_budget
-from state import calculate_state_tax
-from taxable_income import calculate_taxable_income
+import sys
+
+from budget_engine import MARITAL_STATUSES, calculate_budget_summary, export_budget_summary
+from budget_gui import launch_gui
+from sample_budget import print_sample_budget
 
 
-def main():
+def prompt_bool(prompt):
+    return input(prompt).strip().lower() in {"yes", "y"}
+
+
+def run_cli():
     income = float(input("Enter yearly income (before taxes): $"))
 
     print("Input your marital status:")
-    print("1. Single")
-    print("2. Married Filing Jointly / Qualifying Surviving Spouse")
-    print("3. Married Filing Separately")
-    print("4. Head of Household")
+    for code, label in MARITAL_STATUSES.items():
+        print(f"{code}. {label}")
     marital_status = int(input("Type the number corresponding to your marital status: "))
 
     state = input("Enter your state (example: GA or Georgia): ")
-    tithing_input = input("Are you tithing? (yes/no): ").strip().lower()
-    include_tithing = tithing_input in {"yes", "y"}
+    include_tithing = prompt_bool("Are you tithing? (yes/no): ")
     charitable_giving = float(
         input("Enter yearly charitable giving outside of tithing: $")
     )
-    owns_home_input = input("Do you own a home? (yes/no): ").strip().lower()
-    owns_home = owns_home_input in {"yes", "y"}
+    owns_home = prompt_bool("Do you own a home? (yes/no): ")
+    home_value = float(input("How much is your home worth? $")) if owns_home else 0
 
-    property_tax = 0
-    if owns_home:
-        home_value = float(input("How much is your home worth? $"))
-        property_tax = home_value * 0.009
-
-    taxable_income_details = calculate_taxable_income(
-        income,
-        marital_status,
+    summary = calculate_budget_summary(
+        income=income,
+        marital_status=marital_status,
+        state=state,
         include_tithing=include_tithing,
         charitable_giving=charitable_giving,
+        owns_home=owns_home,
+        home_value=home_value,
     )
-    taxable_income = taxable_income_details["taxable_income"]
 
-    federal_tax = calculate_federal_tax(taxable_income, marital_status)
-    fica_tax = calculate_fica_tax(income)
-    state_tax = calculate_state_tax(taxable_income, state)
-
-    if state_tax is None:
+    if not summary["supported"]:
         print("That state's full tax system is not added yet.")
-        print("Federal tax owed: $", round(federal_tax, 2))
+        print("Federal tax owed: $", round(summary["federal_tax"], 2))
         return
 
-    total_tax = federal_tax + fica_tax + state_tax + property_tax
-    take_home = income - total_tax
-    effective_rate = (total_tax / income) * 100 if income > 0 else 0
-
-    print("Gross income: $", round(income, 2))
-    print("Standard deduction: $", round(taxable_income_details["standard_deduction"], 2))
-    print(
-        "Tithing deduction: $",
-        round(taxable_income_details["tithing_amount"], 2),
-    )
+    details = summary["taxable_income_details"]
+    print("Gross income: $", round(details["gross_income"], 2))
+    print("Standard deduction: $", round(details["standard_deduction"], 2))
+    print("Tithing deduction: $", round(details["tithing_amount"], 2))
     print(
         "Other charitable giving deduction: $",
-        round(taxable_income_details["charitable_giving"], 2),
+        round(details["charitable_giving"], 2),
     )
-    print("Deduction used: $", round(taxable_income_details["deduction_used"], 2))
-    print("Taxable income: $", round(taxable_income, 2))
-    print("Federal tax owed: $", round(federal_tax, 2))
-    print("FICA tax owed: $", round(fica_tax, 2))
-    print("State tax owed: $", round(state_tax, 2))
+    print("Deduction used: $", round(details["deduction_used"], 2))
+    print("Taxable income: $", round(details["taxable_income"], 2))
+    print("Federal tax owed: $", round(summary["federal_tax"], 2))
+    print("FICA tax owed: $", round(summary["fica_tax"], 2))
+    print("State tax owed: $", round(summary["state_tax"], 2))
     if owns_home:
-        print("Estimated property tax owed: $", round(property_tax, 2))
-    print("Total tax owed: $", round(total_tax, 2))
-    print("Take-home pay: $", round(take_home, 2))
-    print("Effective tax rate:", round(effective_rate, 2), "%")
+        print("Estimated property tax owed: $", round(summary["property_tax"], 2))
+    print("Total tax owed: $", round(summary["total_tax"], 2))
+    print("Take-home pay: $", round(summary["take_home"], 2))
+    print("Effective tax rate:", round(summary["effective_rate"], 2), "%")
     print("")
-    monthly_income = round(take_home / 12, 2)
+    monthly_income = round(summary["monthly_income"], 2)
     print("Monthly Budget Amount: $", monthly_income)
     print_sample_budget(
         monthly_income,
         include_tithing=include_tithing,
-        property_tax_monthly=property_tax / 12,
+        property_tax_monthly=summary["property_tax"] / 12,
     )
 
-    export_input = input("Export sample budget to Excel? (yes/no): ").strip().lower()
-    if export_input in {"yes", "y"}:
+    if prompt_bool("Export sample budget to Excel? (yes/no): "):
         output_path = input(
             "Enter Excel file name (example: sample_budget.xlsx): "
         ).strip()
         if not output_path:
             output_path = "sample_budget.xlsx"
 
-        export_sample_budget_to_excel(
-            monthly_income,
+        export_budget_summary(
+            summary,
             output_path,
             include_tithing=include_tithing,
-            property_tax_monthly=property_tax / 12,
         )
         print(f"Sample budget exported to {output_path}")
+
+
+def main():
+    if "--cli" in sys.argv:
+        run_cli()
+        return
+
+    launch_gui()
 
 
 if __name__ == "__main__":
