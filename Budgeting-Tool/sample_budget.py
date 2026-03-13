@@ -18,13 +18,13 @@ BASE_BUDGET_PERCENTAGES = [
 ]
 
 
-def build_sample_budget(monthly_income, include_tithing=False):
+def build_sample_budget(monthly_income, include_tithing=False, property_tax_monthly=0):
     budget_percentages = list(BASE_BUDGET_PERCENTAGES)
 
     if include_tithing:
         budget_percentages.insert(0, ("Tithing", 0.10))
 
-    return [
+    budget_items = [
         {
             "expense": expense,
             "percentage": percentage,
@@ -33,14 +33,34 @@ def build_sample_budget(monthly_income, include_tithing=False):
         for expense, percentage in budget_percentages
     ]
 
+    if property_tax_monthly > 0:
+        budget_items.insert(
+            1 if include_tithing else 0,
+            {
+                "expense": "Property Tax",
+                "percentage": None,
+                "amount": round(property_tax_monthly, 2),
+            },
+        )
 
-def print_sample_budget(monthly_income, include_tithing=False):
-    budget_items = build_sample_budget(monthly_income, include_tithing=include_tithing)
+    return budget_items
+
+
+def print_sample_budget(monthly_income, include_tithing=False, property_tax_monthly=0):
+    budget_items = build_sample_budget(
+        monthly_income,
+        include_tithing=include_tithing,
+        property_tax_monthly=property_tax_monthly,
+    )
 
     print("")
     print("Sample Monthly Budget:")
     print(f"Based on monthly take-home pay of ${monthly_income:.2f}")
 
     for item in budget_items:
+        if item["percentage"] is None:
+            print(f"{item['expense']}: ${item['amount']:.2f}")
+            continue
+
         percent_label = f"{item['percentage'] * 100:.0f}%"
         print(f"{item['expense']}: {percent_label} = ${item['amount']:.2f}")
