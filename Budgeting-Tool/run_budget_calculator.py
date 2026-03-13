@@ -1,5 +1,5 @@
 from federal import calculate_federal_tax, calculate_fica_tax
-from sample_budget import print_sample_budget
+from sample_budget import export_sample_budget_to_excel, print_sample_budget
 from state import calculate_state_tax
 from taxable_income import calculate_taxable_income
 
@@ -77,6 +77,22 @@ def main():
         include_tithing=include_tithing,
         property_tax_monthly=property_tax / 12,
     )
+
+    export_input = input("Export sample budget to Excel? (yes/no): ").strip().lower()
+    if export_input in {"yes", "y"}:
+        output_path = input(
+            "Enter Excel file name (example: sample_budget.xlsx): "
+        ).strip()
+        if not output_path:
+            output_path = "sample_budget.xlsx"
+
+        export_sample_budget_to_excel(
+            monthly_income,
+            output_path,
+            include_tithing=include_tithing,
+            property_tax_monthly=property_tax / 12,
+        )
+        print(f"Sample budget exported to {output_path}")
 
 
 if __name__ == "__main__":
