@@ -1,4 +1,5 @@
 from federal import calculate_federal_tax
+from sample_budget import print_sample_budget
 from state import calculate_state_tax
 
 
@@ -32,7 +33,9 @@ def main():
     print("Take-home pay: $", round(take_home, 2))
     print("Effective tax rate:", round(effective_rate, 2), "%")
     print("")
-    print("Monthly Budget Amount: $", round(take_home / 12, 2))
+    monthly_income = round(take_home / 12, 2)
+    print("Monthly Budget Amount: $", monthly_income)
+    print_sample_budget(monthly_income)
 
 
 if __name__ == "__main__":
