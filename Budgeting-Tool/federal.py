@@ -60,3 +60,12 @@ def get_federal_brackets(marital_status):
 def calculate_federal_tax(income, marital_status):
     brackets = get_federal_brackets(marital_status)
     return calculate_bracket_tax(income, brackets)
+
+
+def calculate_fica_tax(income):
+    social_security_wage_base = 176100
+    social_security_tax = min(income, social_security_wage_base) * 0.062
+    medicare_tax = income * 0.0145
+    additional_medicare_tax = max(0, income - 200000) * 0.009
+
+    return social_security_tax + medicare_tax + additional_medicare_tax

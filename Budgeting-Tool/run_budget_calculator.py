@@ -1,4 +1,4 @@
-from federal import calculate_federal_tax
+from federal import calculate_federal_tax, calculate_fica_tax
 from sample_budget import print_sample_budget
 from state import calculate_state_tax
 
@@ -25,6 +25,7 @@ def main():
         property_tax = home_value * 0.009
 
     federal_tax = calculate_federal_tax(income, marital_status)
+    fica_tax = calculate_fica_tax(income)
     state_tax = calculate_state_tax(income, state)
 
     if state_tax is None:
@@ -32,11 +33,12 @@ def main():
         print("Federal tax owed: $", round(federal_tax, 2))
         return
 
-    total_tax = federal_tax + state_tax + property_tax
+    total_tax = federal_tax + fica_tax + state_tax + property_tax
     take_home = income - total_tax
     effective_rate = (total_tax / income) * 100 if income > 0 else 0
 
     print("Federal tax owed: $", round(federal_tax, 2))
+    print("FICA tax owed: $", round(fica_tax, 2))
     print("State tax owed: $", round(state_tax, 2))
     if owns_home:
         print("Estimated property tax owed: $", round(property_tax, 2))
